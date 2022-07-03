@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore
+from aqt.qt import *
 from aqt import mw
+from aqt.utils import tooltip
+
 from . import pyqtkeybind
 
+
+
 def add_card():
-    mw.onAddCard()
+    dialog = mw.onAddCard()
+    dialog.show()
+
 
 def browser():
-    mw.onBrowse()
+    dialog = mw.onBrowse()
+    dialog.show()
 
-class WinEventFilter(QtCore.QAbstractNativeEventFilter):
+
+class WinEventFilter(QAbstractNativeEventFilter):
     def __init__(self, keybinder):
         self.keybinder = keybinder
         super().__init__()
@@ -18,15 +26,23 @@ class WinEventFilter(QtCore.QAbstractNativeEventFilter):
         ret = self.keybinder.handler(eventType, message)
         return ret, 0
 
-cfg = mw.addonManager.getConfig(__name__)
 
-pyqtkeybind.keybinder.init()
-unregistered = False
+if qtmajor == 5:
+	cfg = mw.addonManager.getConfig(__name__)
 
-pyqtkeybind.keybinder.register_hotkey(mw.winId(), cfg["add_card"], add_card)
-pyqtkeybind.keybinder.register_hotkey(mw.winId(), cfg["browser"], browser)
+	pyqtkeybind.keybinder.init()
+	unregistered = False
 
-# Install a native event filter to receive events from the OS
-win_event_filter = WinEventFilter(pyqtkeybind.keybinder)
-event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
-event_dispatcher.installNativeEventFilter(win_event_filter)
+	scut_add = cfg.get("add_card")
+	if scut_add:
+		pyqtkeybind.keybinder.register_hotkey(mw.winId(), scut_add, add_card)
+	scut_browse = cfg.get("browser")
+	if scut_browse:
+		pyqtkeybind.keybinder.register_hotkey(mw.winId(), scut_browse, browser)
+
+	# Install a native event filter to receive events from the OS
+	win_event_filter = WinEventFilter(pyqtkeybind.keybinder)
+	event_dispatcher = QAbstractEventDispatcher.instance()
+	event_dispatcher.installNativeEventFilter(win_event_filter)
+else:
+	tooltip("the add-on global hotkeys only works with pyqt5 at the moment", period=5000)
